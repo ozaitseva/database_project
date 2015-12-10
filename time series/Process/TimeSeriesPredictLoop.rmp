@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<process version="6.5.002">
+  <context>
+    <input/>
+    <output/>
+    <macros/>
+  </context>
+  <operator activated="true" class="process" compatibility="6.5.002" expanded="true" name="Process">
+    <parameter key="logverbosity" value="init"/>
+    <parameter key="random_seed" value="2001"/>
+    <parameter key="send_mail" value="never"/>
+    <parameter key="notification_email" value=""/>
+    <parameter key="process_duration_for_mail" value="30"/>
+    <parameter key="encoding" value="SYSTEM"/>
+    <process expanded="true">
+      <operator activated="true" class="advanced_file_connectors:read_xml" compatibility="6.5.002" expanded="true" height="60" name="Read XML" width="90" x="45" y="30">
+        <parameter key="file" value="C:\Users\Vera\.RapidMiner\repositories\Local Repository\data\newData.xml"/>
+        <parameter key="xpath_for_examples" value="main/DATA_RECORD"/>
+        <enumeration key="xpaths_for_attributes">
+          <parameter key="xpath_for_attribute" value="VALUE[1]/text()"/>
+          <parameter key="xpath_for_attribute" value="DATE[1]/text()"/>
+        </enumeration>
+        <parameter key="use_namespaces" value="true"/>
+        <list key="namespaces"/>
+        <parameter key="use_default_namespace" value="false"/>
+        <parameter key="parse_numbers" value="true"/>
+        <parameter key="decimal_character" value="."/>
+        <parameter key="grouped_digits" value="false"/>
+        <parameter key="grouping_character" value=","/>
+        <parameter key="date_format" value="dd.MM.yyyy HH"/>
+        <list key="annotations"/>
+        <parameter key="time_zone" value="SYSTEM"/>
+        <parameter key="locale" value="English (United States)"/>
+        <list key="data_set_meta_data_information">
+          <parameter key="0" value="VALUE[1]/text().true.numeric.attribute"/>
+          <parameter key="1" value="DATE[1]/text().true.date_time.attribute"/>
+        </list>
+        <parameter key="read_not_matching_values_as_missings" value="true"/>
+        <parameter key="datamanagement" value="double_array"/>
+      </operator>
+      <operator activated="true" class="rename" compatibility="6.5.002" expanded="true" height="76" name="Rename" width="90" x="179" y="120">
+        <parameter key="old_name" value="DATE[1]/text()"/>
+        <parameter key="new_name" value="DATE"/>
+        <list key="rename_additional_attributes">
+          <parameter key="VALUE[1]/text()" value="VALUE"/>
+        </list>
+      </operator>
+      <operator activated="true" class="generate_attributes" compatibility="6.5.002" expanded="true" height="76" name="Generate Attributes" width="90" x="313" y="210">
+        <list key="function_descriptions"/>
+        <parameter key="keep_all" value="true"/>
+      </operator>
+      <operator activated="true" class="generate_id" compatibility="6.5.002" expanded="true" height="76" name="Generate ID" width="90" x="447" y="300">
+        <parameter key="create_nominal_ids" value="false"/>
+        <parameter key="offset" value="0"/>
+      </operator>
+      <operator activated="true" class="multiply" compatibility="6.5.002" expanded="true" height="94" name="Multiply" width="90" x="581" y="390"/>
+      <operator activated="true" class="set_macros" compatibility="6.5.002" expanded="true" height="76" name="Set Macros" width="90" x="447" y="75">
+        <list key="macros">
+          <parameter key="filter" value="1"/>
+        </list>
+      </operator>
+      <operator activated="true" class="loop" compatibility="6.5.002" expanded="true" height="76" name="Loop" width="90" x="581" y="75">
+        <parameter key="set_iteration_macro" value="false"/>
+        <parameter key="macro_name" value="iteration"/>
+        <parameter key="macro_start_value" value="1"/>
+        <parameter key="iterations" value="17"/>
+        <parameter key="limit_time" value="false"/>
+        <parameter key="timeout" value="1"/>
+        <process expanded="true">
+          <operator activated="true" class="filter_examples" compatibility="6.5.002" expanded="true" height="94" name="Filter Examples" width="90" x="45" y="30">
+            <parameter key="parameter_expression" value=""/>
+            <parameter key="condition_class" value="custom_filters"/>
+            <parameter key="invert_filter" value="false"/>
+            <list key="filters_list">
+              <parameter key="filters_entry_key" value="id.ge.%{filter}"/>
+            </list>
+            <parameter key="filters_logic_and" value="true"/>
+            <parameter key="filters_check_metadata" value="true"/>
+          </operator>
+          <operator activated="true" class="r_scripting:execute_r" compatibility="6.5.000" expanded="true" height="94" name="Execute R" width="90" x="313" y="30">
+            <parameter key="script" value="# rm_main is a mandatory function, &#10;# the number of arguments has to be the number of input ports (can be none)&#10;rm_main = function(data1)&#10;{&#10;     data &lt;- ts(data1$VALUE, frequency= 1)&#10;     # data &lt;- data1&#10;     library(&quot;Rssa&quot;)&#10;&#9;s &lt;- ssa(data[1:(length(data)-10)])&#10;&#9;# summary(s)&#10;&#9;# clplot(s)&#10;&#9;prog &lt;- forecast(s, group= list(1:6), len=10)&#10;&#9;# connect 2 output ports to see the results&#10;&#9;a &lt;- 100 -(sum(abs((data[(length(data)-9):length(data)]-prog$mean))*100/data1$VALUE[(length(data)-9):length(data)])/10)&#10;&#9;return(as.data.frame(a))&#10;}&#10;"/>
+          </operator>
+          <operator activated="true" class="generate_macro" compatibility="6.5.002" expanded="true" height="76" name="Generate Macro (2)" width="90" x="514" y="165">
+            <list key="function_descriptions">
+              <parameter key="filter" value="eval(%{filter})+1000"/>
+            </list>
+          </operator>
+          <connect from_port="input 1" to_op="Filter Examples" to_port="example set input"/>
+          <connect from_op="Filter Examples" from_port="example set output" to_op="Execute R" to_port="input 1"/>
+          <connect from_op="Execute R" from_port="output 1" to_port="output 1"/>
+          <connect from_op="Execute R" from_port="output 2" to_op="Generate Macro (2)" to_port="through 1"/>
+          <portSpacing port="source_input 1" spacing="0"/>
+          <portSpacing port="source_input 2" spacing="0"/>
+          <portSpacing port="sink_output 1" spacing="0"/>
+          <portSpacing port="sink_output 2" spacing="0"/>
+        </process>
+      </operator>
+      <connect from_op="Read XML" from_port="output" to_op="Rename" to_port="example set input"/>
+      <connect from_op="Rename" from_port="example set output" to_op="Generate Attributes" to_port="example set input"/>
+      <connect from_op="Generate Attributes" from_port="example set output" to_op="Generate ID" to_port="example set input"/>
+      <connect from_op="Generate ID" from_port="example set output" to_op="Multiply" to_port="input"/>
+      <connect from_op="Multiply" from_port="output 1" to_op="Set Macros" to_port="through 1"/>
+      <connect from_op="Multiply" from_port="output 2" to_port="result 2"/>
+      <connect from_op="Set Macros" from_port="through 1" to_op="Loop" to_port="input 1"/>
+      <connect from_op="Loop" from_port="output 1" to_port="result 1"/>
+      <portSpacing port="source_input 1" spacing="0"/>
+      <portSpacing port="sink_result 1" spacing="0"/>
+      <portSpacing port="sink_result 2" spacing="0"/>
+      <portSpacing port="sink_result 3" spacing="0"/>
+    </process>
+  </operator>
+</process>
