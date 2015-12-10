@@ -1,3 +1,4 @@
+DROP DATABASE TEST_SYSTEM;
 CREATE DATABASE TEST_SYSTEM;
 USE TEST_SYSTEM;
 CREATE TABLE `Users` (
@@ -6,7 +7,6 @@ CREATE TABLE `Users` (
 	`Password` TEXT(20) NOT NULL,
 	`id_type` int NOT NULL,
 	`status` TEXT(20) NOT NULL,
-	`level_id` int NOT NULL,
 	PRIMARY KEY (`id`)
 );
 
@@ -20,6 +20,7 @@ CREATE TABLE `Results` (
 	`id` int NOT NULL AUTO_INCREMENT,
 	`id_user` int NOT NULL,
 	`total` int(3) NOT NULL,
+	`level_id` int NOT NULL,
 	PRIMARY KEY (`id`)
 );
 
@@ -27,7 +28,6 @@ CREATE TABLE `Question` (
 	`id` int NOT NULL AUTO_INCREMENT,
 	`question_text` TEXT NOT NULL,
 	`weight_coefficient` int(2) NOT NULL,
-	`test_id` int NOT NULL,
 	`mod_id` int NOT NULL,
 	`addition` blob NOT NULL,
 	`answer_type` TEXT NOT NULL,
@@ -57,8 +57,9 @@ CREATE TABLE `Module` (
 
 CREATE TABLE `Subtest` (
 	`id` int NOT NULL AUTO_INCREMENT,
-	`variant` int NOT NULL,
-	`test_id` int NOT NULL,
+	`variant_number` int NOT NULL,
+	`test_variant` int NOT NULL,
+	`question_id` int NOT NULL,
 	PRIMARY KEY (`id`)
 );
 
@@ -69,12 +70,6 @@ CREATE TABLE `Answer_user` (
 	`question_id` int NOT NULL,
 	`answer_id_free` int NOT NULL,
 	`answer_id_st` int NOT NULL,
-	PRIMARY KEY (`id`)
-);
-
-CREATE TABLE `Test` (
-	`id` int NOT NULL AUTO_INCREMENT,
-	`variant` int NOT NULL,
 	PRIMARY KEY (`id`)
 );
 
@@ -91,7 +86,7 @@ CREATE TABLE `System_of_estimates` (
 	`level` int NOT NULL,
 	`mark_min` int NOT NULL,
 	`mark_max` int NOT NULL,
-	`test_id` int NOT NULL,
+	`test_variant` int NOT NULL,
 	PRIMARY KEY (`id`)
 );
 
@@ -105,19 +100,17 @@ CREATE TABLE `Results_subtest` (
 
 ALTER TABLE `Users` ADD CONSTRAINT `Users_fk0` FOREIGN KEY (`id_type`) REFERENCES `Type`(`id`);
 
-ALTER TABLE `Users` ADD CONSTRAINT `Users_fk1` FOREIGN KEY (`level_id`) REFERENCES `System_of_estimates`(`id`);
-
 ALTER TABLE `Results` ADD CONSTRAINT `Results_fk0` FOREIGN KEY (`id_user`) REFERENCES `Users`(`id`);
 
-ALTER TABLE `Question` ADD CONSTRAINT `Question_fk0` FOREIGN KEY (`test_id`) REFERENCES `Subtest`(`id`);
+ALTER TABLE `Results` ADD CONSTRAINT `Results_fk1` FOREIGN KEY (`level_id`) REFERENCES `System_of_estimates`(`id`);
 
-ALTER TABLE `Question` ADD CONSTRAINT `Question_fk1` FOREIGN KEY (`mod_id`) REFERENCES `Module`(`id`);
+ALTER TABLE `Question` ADD CONSTRAINT `Question_fk0` FOREIGN KEY (`mod_id`) REFERENCES `Module`(`id`);
 
 ALTER TABLE `Answer_free` ADD CONSTRAINT `Answer_free_fk0` FOREIGN KEY (`id_question`) REFERENCES `Question`(`id`);
 
 ALTER TABLE `Standart_answers` ADD CONSTRAINT `Standart_answers_fk0` FOREIGN KEY (`id_question`) REFERENCES `Question`(`id`);
 
-ALTER TABLE `Subtest` ADD CONSTRAINT `Subtest_fk0` FOREIGN KEY (`test_id`) REFERENCES `Test`(`id`);
+ALTER TABLE `Subtest` ADD CONSTRAINT `Subtest_fk1` FOREIGN KEY (`question_id`) REFERENCES `Question`(`id`);
 
 ALTER TABLE `Answer_user` ADD CONSTRAINT `Answer_user_fk0` FOREIGN KEY (`user_id`) REFERENCES `Users`(`id`);
 
@@ -132,8 +125,6 @@ ALTER TABLE `Answer_user` ADD CONSTRAINT `Answer_user_fk4` FOREIGN KEY (`answer_
 ALTER TABLE `Module_res` ADD CONSTRAINT `Module_res_fk0` FOREIGN KEY (`mod_id`) REFERENCES `Module`(`id`);
 
 ALTER TABLE `Module_res` ADD CONSTRAINT `Module_res_fk1` FOREIGN KEY (`res_id`) REFERENCES `Results_subtest`(`id`);
-
-ALTER TABLE `System_of_estimates` ADD CONSTRAINT `System_of_estimates_fk0` FOREIGN KEY (`test_id`) REFERENCES `Test`(`id`);
 
 ALTER TABLE `Results_subtest` ADD CONSTRAINT `Results_subtest_fk0` FOREIGN KEY (`id_user`) REFERENCES `Users`(`id`);
 
